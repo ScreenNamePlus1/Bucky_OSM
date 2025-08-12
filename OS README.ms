@@ -1,4 +1,4 @@
-# Bucky - Setup Instructions for Delivery Area Feature
+# Bucky - Setup Instructions for Delivery Area Feature in OS (Open Street Maps)
 
 ## Setup Instructions
 
