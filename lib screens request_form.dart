@@ -1,71 +1,88 @@
 import 'package:flutter/material.dart';
-import '../services/firestore_service.dart';
-import '../models/request.dart';
-import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_state.dart';
 
-class RequestFormScreen extends StatelessWidget {
+class RequestForm extends StatefulWidget {
+  @override
+  _RequestFormState createState() => _RequestFormState();
+}
+
+class _RequestFormState extends State<RequestForm> {
   final _formKey = GlobalKey<FormState>();
-  final _restaurantController = TextEditingController();
-  final _orderController = TextEditingController();
-  final _costController = TextEditingController();
-  final _offerController = TextEditingController();
-  final _addressController = TextEditingController();
+  String pickup = '';
+  String dropoff = '';
+  String details = '';
 
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
     return Scaffold(
-      appBar: AppBar(title: Text('New Delivery Request')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
+      appBar: AppBar(title: Text('Create Delivery Request')),
+      body: Form(
+        key: _formKey,
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
           child: Column(
             children: [
               TextFormField(
-                controller: _restaurantController,
-                decoration: InputDecoration(labelText: 'Restaurant Name'),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                decoration: InputDecoration(
+                  labelText: 'Pickup Address',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) => pickup = value,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Required' : null,
               ),
+              SizedBox(height: 16),
               TextFormField(
-                controller: _orderController,
-                decoration: InputDecoration(labelText: 'Order Details'),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
+                decoration: InputDecoration(
+                  labelText: 'Drop-off Address',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) => dropoff = value,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Required' : null,
               ),
+              SizedBox(height: 16),
               TextFormField(
-                controller: _costController,
-                decoration: InputDecoration(labelText: 'Estimated Food Cost (\$)'),
-                keyboardType: TextInputType.number,
-                validator: (value) => double.tryParse(value!) == null ? 'Enter a number' : null,
+                decoration: InputDecoration(
+                  labelText: 'Package Details (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) => details = value,
+                maxLines: 3,
               ),
-              TextFormField(
-                controller: _offerController,
-                decoration: InputDecoration(labelText: 'Delivery Offer (\$)'),
-                keyboardType: TextInputType.number,
-                validator: (value) => double.tryParse(value!) == null ? 'Enter a number' : null,
-              ),
-              TextFormField(
-                controller: _addressController,
-                decoration: InputDecoration(labelText: 'Delivery Address'),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
-              ),
-              SizedBox(height: 20),
+              SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    final request = DeliveryRequest(
-                      id: Uuid().v4(),
-                      customerId: AuthService()._auth.currentUser!.uid,
-                      restaurantName: _restaurantController.text,
-                      orderDetails: _orderController.text,
-                      estimatedCost: double.parse(_costController.text),
-                      offerAmount: double.parse(_offerController.text),
-                      deliveryAddress: _addressController.text,
-                    );
-                    await FirestoreService().postRequest(request);
-                    Navigator.pop(context);
+                    try {
+                      await FirebaseFirestore.instance
+                          .collection('requests')
+                          .add({
+                        'userId': appState.userId,
+                        'pickup': pickup,
+                        'dropoff': dropoff,
+                        'details': details.isEmpty ? null : details,
+                        'status': 'pending',
+                        'createdAt': Timestamp.now(),
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Request created successfully')),
+                      );
+                      Navigator.pop(context);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e')),
+                      );
+                    }
                   }
                 },
-                child: Text('Post Request'),
+                child: Text('Submit Request'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 50),
+                ),
               ),
             ],
           ),
