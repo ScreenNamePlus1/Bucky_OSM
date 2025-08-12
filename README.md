@@ -141,9 +141,8 @@ local_delivery_app/
             android:value="YOUR_API_KEY"/>
       </application>
       <!-- Add permissions -->
- impe2:render type="render_inline_citation">
-<argument name="citation_id">5</argument>
-</grok:render>
+      <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+      <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     </manifest>
     ```
   - Add at the top:
