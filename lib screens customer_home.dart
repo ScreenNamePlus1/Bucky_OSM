@@ -1,55 +1,63 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../services/firestore_service.dart';
-import 'request_form.dart';
-import 'bid_selection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_state.dart';
 
-class CustomerHomeScreen extends StatelessWidget {
-  final FirestoreService _firestoreService = FirestoreService();
-
+class CustomerHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Customer Home'),
+        title: Text('Customer Dashboard'),
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
-            onPressed: () async {
-              await AuthService()._auth.signOut();
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
+            onPressed: () {
+              // Implement logout via auth_service.dart
+              Navigator.pushReplacementNamed(context, '/login');
             },
           ),
         ],
       ),
-      body: StreamBuilder<List<DeliveryRequest>>(
-        stream: _firestoreService.getRequests((await AuthService().getCurrentUser())!.id),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-          final requests = snapshot.data!.where((r) => r.customerId == (AuthService()._auth.currentUser!.uid)).toList();
-          return ListView.builder(
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final request = requests[index];
-              return ListTile(
-                title: Text('${request.restaurantName}: \$${request.offerAmount}'),
-                subtitle: Text(request.status),
-                onTap: () {
-                  Navigator.push(
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection('requests')
+            .where('userId', isEqualTo: appState.userId)
+            .snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text('No requests found.'));
+          }
+          return ListView(
+            padding: EdgeInsets.all(16.0),
+            children: snapshot.data!.docs.map((doc) {
+              return Card(
+                child: ListTile(
+                  title: Text('Delivery to ${doc['dropoff']}'),
+                  subtitle: Text('Status: ${doc['status']}'),
+                  trailing: Icon(Icons.arrow_forward),
+                  onTap: () => Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => BidSelectionScreen(requestId: request.id),
-                    ),
-                  );
-                },
+                    '/bids',
+                    arguments: doc.id,
+                  ),
+                ),
               );
-            },
+            }).toList(),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RequestFormScreen())),
+        onPressed: () => Navigator.pushNamed(context, '/request'),
         child: Icon(Icons.add),
+        tooltip: 'Create New Request',
       ),
     );
   }
