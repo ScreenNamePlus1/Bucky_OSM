@@ -1,5 +1,8 @@
 # Bucky
 
+(https://raw.githubusercontent.com/ScreenNamePlus1/Bucky/refs/heads/main/1755008421060.jpg)
+
+
 Flutter Prototype Code for P2P Delivery App
 
 A peer-to-peer delivery app for Android written in Flutter, where customers post food order requests with delivery offers, drivers bid to accept or counter-offer, and mutual selection matches them. Drivers front the cost at restaurants and get reimbursed in-person by customers (including delivery fee/tip). Features include request posting, bidding, real-time tracking, ratings for trust, GeoFire for location-based driver matching, and Firebase Phone Authentication for secure sign-in. Built with Flutter, Firebase, and Google Maps.
