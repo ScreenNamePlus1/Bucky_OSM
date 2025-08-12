@@ -1,57 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/firestore_service.dart';
+import '../widgets/delivery_area_editor.dart';  // Added import
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class DriverHome extends StatelessWidget {
+class DriverHome extends StatefulWidget {
+  const DriverHome({super.key});
+
+  @override
+  _DriverHomeState createState() => _DriverHomeState();
+}
+
+class _DriverHomeState extends State<DriverHome> {
+  List<LatLng>? _deliveryArea;  // Added: To hold loaded area
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDeliveryArea();  // Added: Load on init
+  }
+
+  Future<void> _loadDeliveryArea() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final firestore = FirestoreService();
+    _deliveryArea = await firestore.getDriverDeliveryArea(appState.currentUser!.id);
+    setState(() {});  // Refresh UI
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Existing UI, e.g., for bids/requests...
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Driver Dashboard'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () {
-              // Implement logout via auth_service.dart
-              Navigator.pushReplacementNamed(context, '/login');
-            },
+      appBar: AppBar(title: const Text('Driver Home')),
+      body: Column(
+        children: [
+          // Added: The delivery area editor widget
+          Expanded(
+            child: DeliveryAreaEditor(
+              apiKey: 'YOUR_GOOGLE_API_KEY',  // Replace with your key
+              initialArea: _deliveryArea,
+            ),
           ),
+          // Add your existing widgets, e.g., list of delivery requests...
         ],
-      ),
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection('requests')
-            .where('status', isEqualTo: 'pending')
-            .snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No pending requests available.'));
-          }
-          return ListView(
-            padding: EdgeInsets.all(16.0),
-            children: snapshot.data!.docs.map((doc) {
-              return Card(
-                child: ListTile(
-                  title: Text('Delivery to ${doc['dropoff']}'),
-                  subtitle: Text('From: ${doc['pickup']}'),
-                  trailing: Icon(Icons.gavel),
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    '/bid',
-                    arguments: {'requestId': doc.id, 'dropoff': doc['dropoff']},
-                  ),
-                ),
-              );
-            }).toList(),
-          );
-        },
       ),
     );
   }
