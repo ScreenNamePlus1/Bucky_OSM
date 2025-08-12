@@ -165,8 +165,7 @@ local_delivery_app/
     geolocator: ^13.0.1
     uuid: ^4.5.1
   ```
- különböző
-- Run:
+- Run the following command in the project directory to fetch dependencies
   ```bash
   flutter pub get
   ```
