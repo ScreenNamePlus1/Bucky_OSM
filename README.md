@@ -1,6 +1,7 @@
 # Bucky
 
-!(https://raw.githubusercontent.com/ScreenNamePlus1/Bucky/refs/heads/main/1755008421060.jpg)
+![](https://raw.githubusercontent.com/ScreenNamePlus1/Bucky/main/1755008421060.jpg)
+
 
 
 Flutter Prototype Code for P2P Delivery App
