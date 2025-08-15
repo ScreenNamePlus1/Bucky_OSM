@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Bucky - Setup Instructions for Delivery Area Feature in OS (Open Street Maps)
 
 ## Setup Instructions
@@ -34,3 +35,7 @@
 5. **Test**:
    - Run `flutter run` on a device/emulator with location enabled.
    - The driver home screen should show a map (OSM tiles) where you can tap to define a delivery area, with points snapping to a grid and roads (via Overpass API). The area saves to Firestore.
+=======
+# Bucky_OSM
+Bucky with Open Street Maps
+>>>>>>> origin/main
