@@ -1,66 +1,61 @@
+// lib/screens/driver_home.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/request.dart';
-import '../providers/app_state.dart';
-import '../services/firestore_service.dart';
-import '../widgets/delivery_area_editor.dart';
+import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+import 'package:bucky_osm/maps/osm_service.dart';
 
-class DriverHome extends StatefulWidget {
-  const DriverHome({super.key});
+class DriverHomeScreen extends StatefulWidget {
+  const DriverHomeScreen({Key? key}) : super(key: key);
 
   @override
-  _DriverHomeState createState() => _DriverHomeState();
+  _DriverHomeScreenState createState() => _DriverHomeScreenState();
 }
 
-class _DriverHomeState extends State<DriverHome> {
+class _DriverHomeScreenState extends State<DriverHomeScreen> {
+  final MapController _mapController = MapController(
+    initMapWithUserPosition: false,
+    initPosition: GeoPoint(latitude: 37.7749, longitude: -122.4194),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
-    final firestore = FirestoreService();
-
     return Scaffold(
       appBar: AppBar(title: const Text('Driver Home')),
-      body: Column(
-        children: [
-          // Delivery area editor
-          SizedBox(
-            height: 300, // Fixed height for map, adjust as needed
-            child: DeliveryAreaEditor(),
-          ),
-          // Existing request feed (assumed from repo)
-          Expanded(
-            child: StreamBuilder<List<Request>>(
-              stream: firestore.getNearbyRequests(
-                appState.currentUser!.location!,
-                10.0, // 10km radius, adjust as needed
+      body: OSMFlutter(
+        controller: _mapController,
+        trackMyPosition: true,
+        mapIsLoading: const Center(child: CircularProgressIndicator()),
+        onMapIsReady: () async {
+          await OSMService.showMap(
+            controller: _mapController,
+            latitude: 37.7749,
+            longitude: -122.4194,
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await OSMService.geocodeAddress('380 New York St, Redlands, CA');
+          if (result != null) {
+            await _mapController.setCenter(
+              GeoPoint(
+                latitude: double.parse(result['lat']),
+                longitude: double.parse(result['lon']),
               ),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Center(child: Text('Error loading requests'));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final requests = snapshot.data!;
-                return ListView.builder(
-                  itemCount: requests.length,
-                  itemBuilder: (context, index) {
-                    final request = requests[index];
-                    return ListTile(
-                      title: Text('Request ${request.id}'),
-                      subtitle: Text('From: ${request.startLocation}'),
-                      onTap: () {
-                        // Navigate to bid screen or show details
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Geocoding failed')),
+            );
+          }
+        },
+        child: const Icon(Icons.search),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
   }
 }
