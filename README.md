@@ -1,41 +1,22 @@
-<<<<<<< HEAD
-# Bucky - Setup Instructions for Delivery Area Feature in OS (Open Street Maps)
+# Bucky_OSM
+
+Bucky_OSM is a peer-to-peer delivery app built with Flutter, integrating OpenStreetMap (OSM) for map visualization, geocoding, and routing. It allows drivers to set delivery areas and customers to request deliveries, leveraging OSM's open-source geospatial data for cost-effective mapping.
+
+## Features
+- **Driver Features**: Set custom delivery areas on an OSM map, accept/reject delivery requests, track locations.
+- **Customer Features**: Request deliveries, view driver locations, track delivery status.
+- **OSM Integration**: Uses `flutter_osm_plugin` for map rendering and `osm_api` for geocoding/routing.
+- **Firebase Backend**: Stores user data, delivery requests, and map polygons via Firestore and GeoFire.
+
+## Prerequisites
+- Flutter SDK (v3.0.0+)
+- Dart (v2.17.0+)
+- Firebase account (for authentication and Firestore)
+- OSM account (optional, for contributing to map data)
+- Android Studio or VS Code for development
 
 ## Setup Instructions
-
-1. **Replace Files**:
-   - Copy and paste each file into your project, overwriting `pubspec.yaml`, `lib/models/user.dart`, `lib/services/firestore_service.dart`, and `lib/screens/driver_home.dart`.
-   - Create `lib/widgets/delivery_area_editor.dart` as a new file.
-2. **Install Dependencies**:
-   - Run `flutter pub get` to install `flutter_map`, `latlong2`, and `http`.
-3. **Configure Permissions**:
-   - In `android/app/src/main/AndroidManifest.xml`, ensure:
-     ```xml
-     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-     ```
-   - In `ios/Runner/Info.plist`, add:
-     ```xml
-     <key>NSLocationWhenInUseUsageDescription</key>
-     <string>App needs location for delivery area and tracking</string>
-     ```
-4. **Firebase Setup**:
-   - Ensure `lib/firebase_options.dart` exists (from `flutterfire configure`).
-   - Verify `main.dart` initializes Firebase:
-     ```dart
-     import 'package:firebase_core/firebase_core.dart';
-     import 'firebase_options.dart';
-
-     void main() async {
-       WidgetsFlutterBinding.ensureInitialized();
-       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-       runApp(const MyApp());
-     }
-     ```
-5. **Test**:
-   - Run `flutter run` on a device/emulator with location enabled.
-   - The driver home screen should show a map (OSM tiles) where you can tap to define a delivery area, with points snapping to a grid and roads (via Overpass API). The area saves to Firestore.
-=======
-# Bucky_OSM
-Bucky with Open Street Maps
->>>>>>> origin/main
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/ScreenNamePlus1/Bucky_OSM.git
+   cd Bucky_OSM
