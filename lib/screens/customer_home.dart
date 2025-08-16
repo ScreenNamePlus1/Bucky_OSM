@@ -1,28 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/app_state.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../providers.dart';
 import '../services/auth_service.dart';
 
-class CustomerHome extends StatefulWidget {
+class CustomerHome extends ConsumerStatefulWidget {
+  const CustomerHome({super.key});
+
   @override
   _CustomerHomeState createState() => _CustomerHomeState();
 }
 
-class _CustomerHomeState extends State<CustomerHome> {
+class _CustomerHomeState extends ConsumerState<CustomerHome> {
   String? _selectedStatus = 'all';
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.read(appStateProvider);
+    final appState = ref.watch(appStateProvider);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Customer Dashboard'),
+        title: const Text('Customer Dashboard'),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
             onPressed: () async {
-              await context.read(authServiceProvider).signOut();
+              await ref.read(authServiceProvider).signOut();
+              ref.read(appStateProvider.notifier).clearUser();
               Navigator.pushReplacementNamed(context, '/login');
             },
           ),
@@ -32,48 +35,47 @@ class _CustomerHomeState extends State<CustomerHome> {
         children: [
           DropdownButton<String>(
             value: _selectedStatus,
-            items: [
+            items: const [
               DropdownMenuItem(value: 'all', child: Text('All Requests')),
               DropdownMenuItem(value: 'pending', child: Text('Pending')),
               DropdownMenuItem(value: 'accepted', child: Text('Accepted')),
               DropdownMenuItem(value: 'delivered', child: Text('Delivered')),
             ],
             onChanged: (value) {
-              setState(() {
-                _selectedStatus = value;
-              });
+              setState(() => _selectedStatus = value);
             },
           ),
           Expanded(
-            child: StreamBuilder(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
                   .collection('requests')
-                  .where('userId', isEqualTo: appState.state['userId'])
-                  .where('status',
-                      isEqualTo: _selectedStatus == 'all' ? null : _selectedStatus)
+                  .where('customerId', isEqualTo: appState['userId'])
                   .snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text('No requests found.'));
+                  return const Center(child: Text('No requests found.'));
                 }
+                final docs = _selectedStatus == 'all'
+                    ? snapshot.data!.docs
+                    : snapshot.data!.docs.where((doc) => doc['status'] == _selectedStatus).toList();
                 return ListView(
-                  padding: EdgeInsets.all(16.0),
-                  children: snapshot.data!.docs.map((doc) {
+                  padding: const EdgeInsets.all(16.0),
+                  children: docs.map((doc) {
                     return Card(
                       child: ListTile(
-                        title: Text('Delivery to ${doc['dropoff']}'),
+                        title: Text('Delivery to ${doc['deliveryAddress']}'),
                         subtitle: Text('Status: ${doc['status']}'),
-                        trailing: Icon(Icons.arrow_forward),
+                        trailing: const Icon(Icons.arrow_forward),
                         onTap: () => Navigator.pushNamed(
                           context,
                           '/bids',
-                          arguments: doc.id,
+                          arguments: {'requestId': doc.id},
                         ),
                       ),
                     );
@@ -86,7 +88,7 @@ class _CustomerHomeState extends State<CustomerHome> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/request'),
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
         tooltip: 'Create New Request',
       ),
     );
