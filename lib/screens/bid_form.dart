@@ -40,9 +40,6 @@ class _BidFormState extends State<BidForm> {
           key: _formKey,
           child: Column(
             children: [
-
-
-
               TextFormField(
                 decoration: InputDecoration(
                   labelText: Intl.message('Bid Amount ($)', name: 'bidAmountLabel'),
