@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../providers/app_state.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../providers.dart';
+import '../models/bid.dart';
+import 'package:uuid/uuid.dart';
 
-class BidForm extends StatefulWidget {
+class BidForm extends ConsumerStatefulWidget {
+  const BidForm({super.key});
+
   @override
   _BidFormState createState() => _BidFormState();
 }
 
-class _BidFormState extends State<BidForm> {
+class _BidFormState extends ConsumerState<BidForm> {
   final _formKey = GlobalKey<FormState>();
-  double amount = 0.0;
+  double counterOffer = 0.0;
   final _amountFocus = FocusNode();
   DateTime? _lastSubmission;
 
@@ -28,55 +31,56 @@ class _BidFormState extends State<BidForm> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.read(appStateProvider);
+    final appState = ref.watch(appStateProvider);
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final requestId = args['requestId'] as String;
-    final dropoff = args['dropoff'] as String;
+    final deliveryAddress = args['deliveryAddress'] as String;
 
     return Scaffold(
-      appBar: AppBar(title: Text(Intl.message('Place Bid for Delivery to $dropoff', name: 'bidFormTitle'))),
+      appBar: AppBar(title: Text('Place Bid for Delivery to $deliveryAddress')),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
               TextFormField(
-                decoration: InputDecoration(
-                  labelText: Intl.message('Bid Amount ($)', name: 'bidAmountLabel'),
+                decoration: const InputDecoration(
+                  labelText: 'Bid Amount ($)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.attach_money),
                 ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 focusNode: _amountFocus,
                 onChanged: (value) {
-                  final parsed = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
-                  amount = parsed > 0 ? parsed : 0.0;
+                  counterOffer = double.tryParse(value) ?? 0.0;
                 },
                 validator: (value) {
-                  if (value == null || value.isEmpty) return Intl.message('Required', name: 'required');
+                  if (value == null || value.isEmpty) return 'Required';
                   if (double.tryParse(value) == null || double.parse(value) <= 0) {
-                    return Intl.message('Enter a valid amount', name: 'invalidAmount');
+                    return 'Enter a valid amount';
                   }
                   return null;
                 },
-                semanticsLabel: Intl.message('Enter your bid amount in dollars', name: 'bidAmountSemantics'),
+                semanticsLabel: 'Enter your bid amount in dollars',
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _canSubmit()
                     ? () async {
                         if (_formKey.currentState!.validate()) {
                           try {
-                            await FirebaseFirestore.instance.collection('bids').add({
-                              'requestId': requestId,
-                              'driverId': appState.state['userId'] ?? '',
-                              'counterOffer': amount,
-                              'createdAt': Timestamp.now(),
-                            });
+                            final bid = Bid(
+                              id: const Uuid().v4(),
+                              requestId: requestId,
+                              driverId: appState['userId'] ?? '',
+                              counterOffer: counterOffer,
+                              timestamp: DateTime.now(),
+                            );
+                            await FirebaseFirestore.instance.collection('bids').doc(bid.id).set(bid.toMap());
                             setState(() => _lastSubmission = DateTime.now());
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Bid submitted successfully')),
+                              const SnackBar(content: Text('Bid submitted successfully')),
                             );
                             Navigator.pop(context);
                           } catch (e) {
@@ -87,7 +91,7 @@ class _BidFormState extends State<BidForm> {
                         }
                       }
                     : null,
-                child: Text('Submit Bid'),
+                child: const Text('Submit Bid'),
               ),
             ],
           ),
