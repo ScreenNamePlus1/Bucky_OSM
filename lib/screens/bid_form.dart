@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../providers/app_state.dart';
 
 class BidForm extends StatefulWidget {
   @override
@@ -27,7 +28,7 @@ class _BidFormState extends State<BidForm> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
+    final appState = context.read(appStateProvider);
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final requestId = args['requestId'] as String;
     final dropoff = args['dropoff'] as String;
@@ -49,11 +50,8 @@ class _BidFormState extends State<BidForm> {
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 focusNode: _amountFocus,
                 onChanged: (value) {
-                final parsed = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
-    amount = parsed > 0 ? parsed : 0.0;
-  },
-                onChanged: (value) {
-                  amount = double.tryParse(value) ?? 0.0;
+                  final parsed = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+                  amount = parsed > 0 ? parsed : 0.0;
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) return Intl.message('Required', name: 'required');
@@ -72,20 +70,29 @@ class _BidFormState extends State<BidForm> {
                           try {
                             await FirebaseFirestore.instance.collection('bids').add({
                               'requestId': requestId,
-                              'driverId': appState.userId,
-                              'amount': amount,
+                              'driverId': appState.state['userId'] ?? '',
+                              'counterOffer': amount,
                               'createdAt': Timestamp.now(),
                             });
                             setState(() => _lastSubmission = DateTime.now());
-ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Bid submitted successfully')),
-            );
-Navigator.pop(context);
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: $e')),
-            );
-          }
-        }
-      }
-    : null,
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Bid submitted successfully')),
+                            );
+                            Navigator.pop(context);
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          }
+                        }
+                      }
+                    : null,
+                child: Text('Submit Bid'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
