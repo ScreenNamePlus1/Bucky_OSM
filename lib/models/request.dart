@@ -10,16 +10,20 @@ class DeliveryRequest {
   final String? driverId;
 
   DeliveryRequest({
-    required this.id,
-    required this.customerId,
-    required this.restaurantName,
-    required this.orderDetails,
-    required this.estimatedCost,
-    required this.offerAmount,
-    required this.deliveryAddress,
-    this.status = 'pending',
-    this.driverId,
-  });
+      required this.id,
+      required this.customerId,
+      required String restaurantName,
+      required String orderDetails,
+      required double estimatedCost,
+      required double offerAmount,
+      required String deliveryAddress,
+      this.status = 'pending',
+      this.driverId,
+    })  : restaurantName = restaurantName.isEmpty ? throw Exception('Restaurant name required') : restaurantName,
+          orderDetails = orderDetails.isEmpty ? throw Exception('Order details required') : orderDetails,
+          estimatedCost = estimatedCost <= 0 ? throw Exception('Estimated cost must be positive') : estimatedCost,
+          offerAmount = offerAmount <= 0 ? throw Exception('Offer amount must be positive') : offerAmount,
+          deliveryAddress = deliveryAddress.isEmpty ? throw Exception('Delivery address required') : deliveryAddress;
 
   Map<String, dynamic> toMap() => {
         'id': id,
