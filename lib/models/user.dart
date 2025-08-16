@@ -1,5 +1,5 @@
 class AppUser {
-  final String id;
+   String id;
   final String role;
 
   AppUser({required this.id, required this.role});
