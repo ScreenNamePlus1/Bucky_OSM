@@ -83,9 +83,9 @@ class _RequestFormState extends State<RequestForm> {
                         'status': 'pending',
                         'createdAt': Timestamp.now(),
                       });
-                      ScaffoldMessenger.of(context).showSnac
+                      ScaffoldMessenger.of(context).showSnackbar(
 kBar(
-                        SnackBar(content: Text('Request created successfully')),
+                        const SnackBar(content: Text('Request created successfully')),
                       );
                       Navigator.pop(context);
                     } catch (e) {
