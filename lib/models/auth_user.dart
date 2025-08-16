@@ -1,31 +1,33 @@
-class OSMUser {
-    final String id;
-    final String name;
-    final double latitude;
-    final double longitude;
+import 'package:firebase_auth/firebase_auth.dart' as firebase;
 
-    OSMUser({
-      required this.id,
-      required this.name,
-      required this.latitude,
-      required this.longitude,
-    });
+class AuthUser {
+  final String uid;
+  final String? phoneNumber;
+  final String role;
 
-    factory OSMUser.fromJson(Map<String, dynamic> json) {
-      return OSMUser(
-        id: json['id'],
-        name: json['name'],
-        latitude: json['latitude'],
-        longitude: json['longitude'],
-      );
-    }
+  AuthUser({
+    required this.uid,
+    required this.phoneNumber,
+    required this.role,
+  });
 
-    Map<String, dynamic> toJson() {
-      return {
-        'id': id,
-        'name': name,
-        'latitude': latitude,
-        'longitude': longitude,
-      };
-    }
+  factory AuthUser.fromFirebaseUser(firebase.User user, String role) {
+    return AuthUser(
+      uid: user.uid,
+      phoneNumber: user.phoneNumber,
+      role: role,
+    );
   }
+
+  Map<String, dynamic> toMap() => {
+        'uid': uid,
+        'phoneNumber': phoneNumber,
+        'role': role,
+      };
+
+  factory AuthUser.fromMap(Map<String, dynamic> map) => AuthUser(
+        uid: map['uid'] ?? '',
+        phoneNumber: map['phoneNumber'],
+        role: map['role'] ?? 'customer',
+      );
+}
