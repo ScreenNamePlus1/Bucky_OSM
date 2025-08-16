@@ -3,7 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 
-class CustomerHome extends StatelessWidget {
+class CustomerHome extends StatefulWidget {
+  @override
+  _CustomerHomeState createState() => _CustomerHomeState();
+}
+
+class _CustomerHomeState extends State<CustomerHome> {
+  String? _selectedStatus = 'all'; 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
@@ -21,6 +27,23 @@ class CustomerHome extends StatelessWidget {
         ],
       ),
       body: StreamBuilder(
+       body: Column(
+        children: [
+         DropdownButton<String>(
+          value: 'all',
+          items: [
+        DropdownMenuItem(value: 'all', child: Text('All Requests')),
+        DropdownMenuItem(value: 'pending', child: Text('Pending')),
+        DropdownMenuItem(value: 'accepted', child: Text('Accepted')),
+        DropdownMenuItem(value: 'delivered', child: Text('Delivered')),
+      ],
+      onChanged: (value) {
+        setState(() {
+          _selectedStatus = value;
+        });
+      },
+    ),
+    body: StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection('requests')
             .where('userId', isEqualTo: appState.userId)
