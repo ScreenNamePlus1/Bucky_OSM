@@ -13,10 +13,10 @@ class CustomerHome extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
-            onPressed: () {
-              // Implement logout via auth_service.dart
-              Navigator.pushReplacementNamed(context, '/login');
-            },
+            onPressed: () async {
+            await Provider.of<AuthService>(context, listen: false).signOut();
+            Navigator.pushReplacementNamed(context, '/login');
+           },
           ),
         ],
       ),
