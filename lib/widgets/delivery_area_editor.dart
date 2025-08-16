@@ -16,6 +16,24 @@ class DeliveryAreaEditor extends StatefulWidget {
 
 class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
   final MapController _mapController = MapController();
+  final MapController _mapController = MapController();
+      LatLng _initialCenter = const LatLng(37.7749, -122.4194); // Fallback
+      @override
+      void initState() {
+        super.initState();
+        _setInitialCenter();
+        _loadInitialArea();
+      }
+      Future<void> _setInitialCenter() async {
+        try {
+          final position = await LocationService().getCurrentLocation();
+          setState(() {
+            _initialCenter = LatLng(position.latitude, position.longitude);
+          });
+        } catch (e) {
+          print('Error setting initial center: $e');
+        }
+      }
   List<LatLng> _polygonPoints = [];
   List<Polygon> _polygons = [];
   bool _drawingMode = false;
@@ -67,6 +85,7 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
       try {
         final response = await http.post(
           Uri.parse(overpassUrl),
+          headers: {'User-Agent': 'Bucky_OSM/1.0'},
           body: query,
         );
         if (response.statusCode == 200) {
@@ -107,6 +126,38 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
   Future<void> _finalizeArea() async {
     if (_polygonPoints.length < 3) return;
 
+     if (_polygonPoints.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('At least 3 points required')),
+      );
+      return;
+    }
+    // Check for self-intersection (simplified)
+    bool hasIntersection = false;
+    for (int i = 0; i < _polygonPoints.length - 1; i++) {
+      for (int j = i + 2; j < _polygonPoints.length - 1; j++) {
+        if (_linesIntersect(_polygonPoints[i], _polygonPoints[i + 1], _polygonPoints[j], _polygonPoints[j + 1])) {
+          hasIntersection = true;
+          break;
+        }
+      }
+    }
+    if (hasIntersection) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Polygon cannot self-intersect')),
+      );
+      return;
+    }
+    bool _linesIntersect(LatLng p1, LatLng p2, LatLng p3, LatLng p4) {
+    double det = (p2.longitude - p1.longitude) * (p4.latitude - p3.latitude) - 
+                 (p4.longitude - p3.longitude) * (p2.latitude - p1.latitude);
+    if (det == 0) return false; // Parallel lines
+    double t = ((p3.longitude - p1.longitude) * (p4.latitude - p3.latitude) - 
+                (p3.latitude - p1.latitude) * (p4.longitude - p3.longitude)) / det;
+    double u = -((p2.longitude - p1.longitude) * (p3.latitude - p1.latitude) - 
+                 (p2.latitude - p1.latitude) * (p3.longitude - p1.longitude)) / det;
+    return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+  }
     List<LatLng> snappedPoints = await _snapToRoads(_polygonPoints);
 
     if (snappedPoints.isNotEmpty && snappedPoints.first != snappedPoints.last) {
@@ -158,7 +209,7 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
           child: FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: const LatLng(37.7749, -122.4194), // Customize to user location
+              initialCenter: _initialCenter,
               initialZoom: 12.0,
               onTap: _onMapTap,
             ),
