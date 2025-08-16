@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'bid.dart';
+import '../lib/models/bid.dart';
 
 void main() {
   test('Bid toMap/fromMap consistency', () {
