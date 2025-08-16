@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:retry/retry.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../utils/constants.dart';
 
 class OSMService {
   static Future<Map<String, dynamic>?> geocodeAddress(String address) async {
@@ -14,7 +15,7 @@ class OSMService {
       final response = await retry(
         () => http.get(
           Uri.parse('https://nominatim.openstreetmap.org/search?format=json&q=$address'),
-          headers: {'User-Agent': 'Bucky_OSM/1.0 (buckyosm@example.com)'},
+          headers: {'User-Agent': USER_AGENT},
         ),
         maxAttempts: 3,
         delayFactor: const Duration(seconds: 1),
