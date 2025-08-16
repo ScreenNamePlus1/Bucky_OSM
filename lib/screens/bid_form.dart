@@ -46,7 +46,7 @@ class _BidFormState extends ConsumerState<BidForm> {
             children: [
               TextFormField(
                 decoration: const InputDecoration(
-                  labelText: 'Bid Amount ($)',
+                  labelText: 'Bid Amount (\$)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.attach_money),
                 ),
@@ -57,8 +57,9 @@ class _BidFormState extends ConsumerState<BidForm> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Required';
-                  if (double.tryParse(value) == null || double.parse(value) <= 0) {
-                    return 'Enter a valid amount';
+                  final amount = double.tryParse(value);
+                  if (amount == null || amount < 5.0) {
+                    return 'Enter a valid amount. Minimum bid is \$5.00';
                   }
                   return null;
                 },
