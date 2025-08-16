@@ -18,8 +18,19 @@ class BidSelectionScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Error: ${snapshot.error}'),
+          ElevatedButton(
+            onPressed: () => setState(() {}),
+            child: Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
