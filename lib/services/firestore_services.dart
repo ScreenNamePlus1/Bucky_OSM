@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geoflutterfire2/geoflutterfire2.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/user.dart';
-import '../maps_user.dart';
 import '../models/bid.dart';
 import '../models/request.dart';
 
@@ -23,8 +22,10 @@ class FirestoreService {
   }
 
   Future<void> updateUserLocation(String userId, GeoPoint location, String geohash) async {
-    final osmUser = OSMUser(id: userId, location: location, geohash: geohash);
-    await _firestore.collection('users').doc(userId).update(osmUser.toMap());
+    await _firestore.collection('users').doc(userId).update({
+      'location': location,
+      'geohash': geohash,
+    });
   }
 
   Future<void> createRequest(Request request) async {
@@ -34,8 +35,8 @@ class FirestoreService {
   Stream<List<Request>> getNearbyRequests(GeoPoint center, double radiusKm) {
     return _geo
         .collection(collectionRef: _firestore.collection('requests'))
-        .within(center: center, radius: radiusKm, field: 'location')
-        .map((docs) => docs.map((doc) => Request.fromMap(doc.data() ?? {}, doc.id)).toList());
+        .within(center: center, radius: radiusKm, field: 'pickupLocation')
+        .map((docs) => docs.map((doc) => Request.fromMap(doc.data())).toList());
   }
 
   Future<void> updateDriverDeliveryArea(String userId, List<LatLng> area) async {
@@ -55,6 +56,9 @@ class FirestoreService {
   }
 
   Future<void> rateUser(String userId, double rating) async {
-    await _firestore.collection('users').doc(userId).update({'rating': rating});
+    await _firestore.collection('users').doc(userId).update({
+      'rating': FieldValue.increment(rating),
+      'ratingCount': FieldValue.increment(1),
+    });
   }
 }
