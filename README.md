@@ -20,3 +20,33 @@ Bucky_OSM is a peer-to-peer delivery app built with Flutter, integrating OpenStr
    ```bash
    git clone https://github.com/ScreenNamePlus1/Bucky_OSM.git
    cd Bucky_OSM
+
+~/bucky_osm/
+├── lib/
+│   ├── app_state.dart
+│   ├── auth_user.dart
+│   ├── maps_user.dart
+│   ├── providers.dart
+│   ├── main.dart
+│   ├── models/
+│   │   ├── bid.dart
+│   │   ├── request.dart
+│   │   ├── user.dart
+│   ├── screens/
+│   │   ├── bid_form.dart
+│   │   ├── bid_selection.dart
+│   │   ├── customer_home.dart
+│   │   ├── delivery_area_editor.dart
+│   │   ├── driver_home.dart
+│   │   ├── login.dart
+│   │   ├── request_form.dart
+│   │   ├── tracking.dart
+│   ├── services/
+│   │   ├── Auth_service.dart
+│   │   ├── firestore_services.dart
+│   │   ├── location_service.dart
+│   │   ├── osm_service.dart
+├── test/
+│   ├── bid_test.dart
+├── firebase.json
+├── pubspec.yaml
