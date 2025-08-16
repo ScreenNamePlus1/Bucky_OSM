@@ -110,3 +110,11 @@ import 'package:flutter/material.dart';
         ),
       );
     }
+
+    @override
+    void dispose() {
+      _phoneController.dispose();
+      _otpController.dispose();
+      super.dispose();
+    }
+  }
