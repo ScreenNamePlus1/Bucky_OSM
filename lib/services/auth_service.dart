@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../auth_user.dart';
 import '../models/user.dart';
-import 'dart:async';
 
 class AuthService {
   final firebase.FirebaseAuth _auth = firebase.FirebaseAuth.instance;
@@ -18,7 +16,7 @@ class AuthService {
     try {
       if (!['customer', 'driver'].contains(role)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invalid role selected')),
+          const SnackBar(content: Text('Invalid role selected')),
         );
         return;
       }
@@ -28,12 +26,8 @@ class AuthService {
           final userCredential = await _auth.signInWithCredential(credential);
           final user = userCredential.user;
           if (user != null) {
-            final authUser = AuthUser.fromFirebaseUser(user, role);
             final appUser = AppUser(id: user.uid, role: role);
-            await _firestore.collection('users').doc(user.uid).set({
-              ...authUser.toMap(),
-              ...appUser.toMap(),
-            });
+            await _firestore.collection('users').doc(user.uid).set(appUser.toMap());
           }
         },
         verificationFailed: (firebase.FirebaseAuthException e) {
@@ -67,12 +61,8 @@ class AuthService {
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user;
       if (user != null) {
-        final authUser = AuthUser.fromFirebaseUser(user, role);
         final appUser = AppUser(id: user.uid, role: role);
-        await _firestore.collection('users').doc(user.uid).set({
-          ...authUser.toMap(),
-          ...appUser.toMap(),
-        });
+        await _firestore.collection('users').doc(user.uid).set(appUser.toMap());
         return appUser;
       }
     } catch (e) {
