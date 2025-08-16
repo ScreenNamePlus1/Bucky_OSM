@@ -1,90 +1,114 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../maps/osm_service.dart';
-import '../providers/app_state.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/osm_service.dart';
+import '../providers.dart';
+import '../models/request.dart';
+import 'package:uuid/uuid.dart';
 
-class RequestForm extends StatefulWidget {
+class RequestForm extends ConsumerStatefulWidget {
+  const RequestForm({super.key});
+
   @override
   _RequestFormState createState() => _RequestFormState();
 }
 
-class _RequestFormState extends State<RequestForm> {
+class _RequestFormState extends ConsumerState<RequestForm> {
   final _formKey = GlobalKey<FormState>();
-  String pickup = '';
-  String dropoff = '';
-  String details = '';
+  String restaurantName = '';
+  String orderDetails = '';
+  String deliveryAddress = '';
+  double estimatedCost = 0.0;
+  double offerAmount = 0.0;
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.read(appStateProvider);
+    final appState = ref.watch(appStateProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Create Delivery Request')),
+      appBar: AppBar(title: const Text('Create Delivery Request')),
       body: Form(
         key: _formKey,
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
               TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Pickup Address',
+                decoration: const InputDecoration(
+                  labelText: 'Restaurant Name',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (value) => pickup = value,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Required' : null,
+                onChanged: (value) => restaurantName = value,
+                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Drop-off Address',
+                decoration: const InputDecoration(
+                  labelText: 'Order Details',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (value) => dropoff = value,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Required' : null,
+                onChanged: (value) => orderDetails = value,
+                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Package Details (Optional)',
+                decoration: const InputDecoration(
+                  labelText: 'Delivery Address',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (value) => details = value,
-                maxLines: 3,
+                onChanged: (value) => deliveryAddress = value,
+                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 16),
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Estimated Cost ($)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                onChanged: (value) => estimatedCost = double.tryParse(value) ?? 0.0,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Required';
+                  final cost = double.tryParse(value);
+                  return cost == null || cost <= 0 ? 'Enter a valid amount' : null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Offer Amount ($)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                onChanged: (value) => offerAmount = double.tryParse(value) ?? 0.0,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Required';
+                  final amount = double.tryParse(value);
+                  return amount == null || amount <= 0 ? 'Enter a valid amount' : null;
+                },
+              ),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     try {
-                      final pickupResult = await OSMService.geocodeAddress(pickup);
-                      final dropoffResult = await OSMService.geocodeAddress(dropoff);
-                      if (pickupResult == null || dropoffResult == null) {
+                      final addressResult = await OSMService.geocodeAddress(deliveryAddress);
+                      if (addressResult == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Invalid pickup or dropoff address')),
+                          const SnackBar(content: Text('Invalid delivery address')),
                         );
                         return;
                       }
-                      await FirebaseFirestore.instance.collection('requests').add({
-                        'userId': appState.state['userId'] ?? '',
-                        'pickup': pickup,
-                        'pickupLocation': GeoPoint(
-                          double.parse(pickupResult['lat']),
-                          double.parse(pickupResult['lon']),
-                        ),
-                        'dropoff': dropoff,
-                        'dropoffLocation': GeoPoint(
-                          double.parse(dropoffResult['lat']),
-                          double.parse(dropoffResult['lon']),
-                        ),
-                        'details': details.isEmpty ? null : details,
-                        'status': 'pending',
-                        'createdAt': Timestamp.now(),
-                      });
-                      ScaffoldMessenger.of(context).showSnackbar(
-kBar(
+                      final request = Request(
+                        id: const Uuid().v4(),
+                        customerId: appState['userId'] ?? '',
+                        restaurantName: restaurantName,
+                        orderDetails: orderDetails,
+                        estimatedCost: estimatedCost,
+                        offerAmount: offerAmount,
+                        deliveryAddress: deliveryAddress,
+                      );
+                      await ref.read(firestoreServiceProvider).createRequest(request);
+                      ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Request created successfully')),
                       );
                       Navigator.pop(context);
@@ -95,10 +119,10 @@ kBar(
                     }
                   }
                 },
-                child: Text('Submit Request'),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 50),
                 ),
+                child: const Text('Submit Request'),
               ),
             ],
           ),
@@ -107,3 +131,4 @@ kBar(
     );
   }
 }
+```
