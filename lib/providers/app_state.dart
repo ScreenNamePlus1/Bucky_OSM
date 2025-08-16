@@ -1,23 +1,23 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AppState with ChangeNotifier {
-  String? _userId;
-  String? _userRole;
+class AppState extends StateNotifier<Map<String, String?>> {
+  AppState() : super({'userId': null, 'userRole': 'customer'});
 
-  AppState() : _userId = null, _userRole = 'customer';
+  String? get userId => state['userId'];
+  String? get userRole => state['userRole'];
 
-  String? get userId => _userId;
-  String? get userRole => _userRole;
-
-  void setUser(if (!['customer', 'driver'].contains(role)) throw Exception('Invalid role');) {
-    _userId = id;
-    _userRole = role ?? 'customer';
-    notifyListeners();
+  void setUser(String? id, String? role) {
+    if (role != null && !['customer', 'driver'].contains(role)) {
+      throw Exception('Invalid role');
+    }
+    state = {'userId': id, 'userRole': role ?? 'customer'};
   }
 
   void clearUser() {
-    _userId = null;
-    _userRole = null;
-    notifyListeners();
+    state = {'userId': null, 'userRole': null};
   }
 }
+
+final appStateProvider = StateNotifierProvider<AppState, Map<String, String?>>(
+  (ref) => AppState(),
+);
