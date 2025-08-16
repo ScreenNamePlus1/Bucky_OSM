@@ -3,9 +3,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_state.dart';
 import '../services/firestore_service.dart';
+import '../services/location_service.dart';
 
 class DeliveryAreaEditor extends StatefulWidget {
   const DeliveryAreaEditor({super.key});
@@ -16,24 +17,7 @@ class DeliveryAreaEditor extends StatefulWidget {
 
 class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
   final MapController _mapController = MapController();
-  final MapController _mapController = MapController();
-      LatLng _initialCenter = const LatLng(37.7749, -122.4194); // Fallback
-      @override
-      void initState() {
-        super.initState();
-        _setInitialCenter();
-        _loadInitialArea();
-      }
-      Future<void> _setInitialCenter() async {
-        try {
-          final position = await LocationService().getCurrentLocation();
-          setState(() {
-            _initialCenter = LatLng(position.latitude, position.longitude);
-          });
-        } catch (e) {
-          print('Error setting initial center: $e');
-        }
-      }
+  LatLng _initialCenter = const LatLng(37.7749, -122.4194); // Fallback
   List<LatLng> _polygonPoints = [];
   List<Polygon> _polygons = [];
   bool _drawingMode = false;
@@ -41,13 +25,25 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
   @override
   void initState() {
     super.initState();
+    _setInitialCenter();
     _loadInitialArea();
   }
 
+  Future<void> _setInitialCenter() async {
+    try {
+      final position = await LocationService().getCurrentLocation();
+      setState(() {
+        _initialCenter = LatLng(position.latitude, position.longitude);
+      });
+    } catch (e) {
+      print('Error setting initial center: $e');
+    }
+  }
+
   Future<void> _loadInitialArea() async {
-    final appState = Provider.of<AppState>(context, listen: false);
+    final appState = context.read(appStateProvider);
     final firestore = FirestoreService();
-    final area = await firestore.getDriverDeliveryArea(appState.currentUser!.id);
+    final area = await firestore.getDriverDeliveryArea(appState.state['userId'] ?? '');
     if (area != null) {
       setState(() {
         _polygonPoints = area;
@@ -64,7 +60,7 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
     });
   }
 
-  LatLng _snapToGrid(LatLng point, {double gridSize = 0.0009}) { // ~100m
+  LatLng _snapToGrid(LatLng point, {double gridSize = 0.0009}) {
     double lat = (point.latitude / gridSize).round() * gridSize;
     double lng = (point.longitude / gridSize).round() * gridSize;
     return LatLng(lat, lng);
@@ -123,16 +119,25 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
     });
   }
 
-  Future<void> _finalizeArea() async {
-    if (_polygonPoints.length < 3) return;
+  bool _linesIntersect(LatLng p1, LatLng p2, LatLng p3, LatLng p4) {
+    double det = (p2.longitude - p1.longitude) * (p4.latitude - p3.latitude) -
+        (p4.longitude - p3.longitude) * (p2.latitude - p1.latitude);
+    if (det == 0) return false; // Parallel lines
+    double t = ((p3.longitude - p1.longitude) * (p4.latitude - p3.latitude) -
+            (p3.latitude - p1.latitude) * (p4.longitude - p3.longitude)) / det;
+    double u = -((p2.longitude - p1.longitude) * (p3.latitude - p1.latitude) -
+            (p2.latitude - p1.latitude) * (p3.longitude - p1.longitude)) / det;
+    return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+  }
 
-     if (_polygonPoints.length < 3) {
+  Future<void> _finalizeArea() async {
+    if (_polygonPoints.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('At least 3 points required')),
       );
       return;
     }
-    // Check for self-intersection (simplified)
+    // Check for self-intersection
     bool hasIntersection = false;
     for (int i = 0; i < _polygonPoints.length - 1; i++) {
       for (int j = i + 2; j < _polygonPoints.length - 1; j++) {
@@ -148,16 +153,6 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
       );
       return;
     }
-    bool _linesIntersect(LatLng p1, LatLng p2, LatLng p3, LatLng p4) {
-    double det = (p2.longitude - p1.longitude) * (p4.latitude - p3.latitude) - 
-                 (p4.longitude - p3.longitude) * (p2.latitude - p1.latitude);
-    if (det == 0) return false; // Parallel lines
-    double t = ((p3.longitude - p1.longitude) * (p4.latitude - p3.latitude) - 
-                (p3.latitude - p1.latitude) * (p4.longitude - p3.longitude)) / det;
-    double u = -((p2.longitude - p1.longitude) * (p3.latitude - p1.latitude) - 
-                 (p2.latitude - p1.latitude) * (p3.longitude - p1.longitude)) / det;
-    return t >= 0 && t <= 1 && u >= 0 && u <= 1;
-  }
     List<LatLng> snappedPoints = await _snapToRoads(_polygonPoints);
 
     if (snappedPoints.isNotEmpty && snappedPoints.first != snappedPoints.last) {
@@ -170,9 +165,9 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
       _drawingMode = false;
     });
 
-    final appState = Provider.of<AppState>(context, listen: false);
+    final appState = context.read(appStateProvider);
     final firestore = FirestoreService();
-    await firestore.updateDriverDeliveryArea(appState.currentUser!.id, _polygonPoints);
+    await firestore.updateDriverDeliveryArea(appState.state['userId'] ?? '', _polygonPoints);
   }
 
   void _updatePolygon() {
