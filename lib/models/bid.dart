@@ -4,7 +4,7 @@ class Bid {
   final String driverId;
   final double counterOffer;
   final String status; // pending, accepted, rejected
-  final DateTime createdAt;
+  final DateTime timestamp;
 
   Bid({
     required this.id,
@@ -12,24 +12,24 @@ class Bid {
     required this.driverId,
     required this.counterOffer,
     this.status = 'pending',
-    required this.createdAt,
+    required this.timestamp,
   });
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'requestId': requestId,
-        'driverId': driverId,
-        'counterOffer': counterOffer,
-        'status': status,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'requestId': requestId,
+    'driverId': driverId,
+    'counterOffer': counterOffer,
+    'status': status,
+    'timestamp': timestamp.toIso8601String(),
+  };
 
   factory Bid.fromMap(Map<String, dynamic> map) => Bid(
-        id: map['id'],
-        requestId: map['requestId'],
-        driverId: map['driverId'],
-        counterOffer: map['counterOffer'],
-        status: map['status'],
-        createdAt: DateTime.parse(map['createdAt']),
-      );
+    id: map['id'],
+    requestId: map['requestId'],
+    driverId: map['driverId'],
+    counterOffer: map['counterOffer'],
+    status: map['status'],
+    timestamp: DateTime.parse(map['timestamp']),
+  );
 }
