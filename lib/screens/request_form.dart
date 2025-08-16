@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../maps/osm_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
@@ -56,29 +58,43 @@ class _RequestFormState extends State<RequestForm> {
               SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    try {
-                      await FirebaseFirestore.instance
-                          .collection('requests')
-                          .add({
-                        'userId': appState.userId,
-                        'pickup': pickup,
-                        'dropoff': dropoff,
-                        'details': details.isEmpty ? null : details,
-                        'status': 'pending',
-                        'createdAt': Timestamp.now(),
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Request created successfully')),
-                      );
-                      Navigator.pop(context);
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $e')),
-                      );
-                    }
-                  }
-                },
+      if (_formKey.currentState!.validate()) {
+        try {
+          final pickupResult = await OSMService.geocodeAddress(pickup);
+          final dropoffResult = await OSMService.geocodeAddress(dropoff);
+          if (pickupResult == null || dropoffResult == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Invalid pickup or dropoff address')),
+            );
+            return;
+          }
+          await FirebaseFirestore.instance.collection('requests').add({
+            'userId': appState.userId,
+            'pickup': pickup,
+            'pickupLocation': GeoPoint(
+              double.parse(pickupResult['lat']),
+              double.parse(pickupResult['lon']),
+            ),
+            'dropoff': dropoff,
+            'dropoffLocation': GeoPoint(
+              double.parse(dropoffResult['lat']),
+              double.parse(dropoffResult['lon']),
+            ),
+            'details': details.isEmpty ? null : details,
+            'status': 'pending',
+            'createdAt': Timestamp.now(),
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Request created successfully')),
+          );
+          Navigator.pop(context);
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    },
                 child: Text('Submit Request'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, 50),
