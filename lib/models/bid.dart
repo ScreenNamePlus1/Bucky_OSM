@@ -15,6 +15,15 @@ class Bid {
     required this.timestamp,
   });
 
+  Bid({
+  required this.id,
+  required this.requestId,
+  required this.driverId,
+  required double counterOffer,
+  this.status = 'pending',
+  required this.timestamp,
+}) : counterOffer = counterOffer <= 0 ? throw Exception('Counter offer must be positive') : counterOffer;
+
   Map<String, dynamic> toMap() => {
     'id': id,
     'requestId': requestId,
