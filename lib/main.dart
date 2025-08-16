@@ -15,6 +15,11 @@ void main() async {
   runApp(ProviderScope(child: MyApp()));
 }
 
+FlutterError.onError = (details) {
+  print('Global error: $details');
+  // Log to Firebase or Sentry
+};
+
 class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
