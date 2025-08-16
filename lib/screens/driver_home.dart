@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+import 'package:latlong2/latlong.dart';
 import '../services/location_service.dart';
 import '../services/osm_service.dart';
 import '../providers.dart';
@@ -18,6 +19,23 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     initPosition: GeoPoint(latitude: 37.7749, longitude: -122.4194),
   );
 
+  // New variable to hold the route
+  List<GeoPoint> routePoints = [];
+
+  // New method to draw the route
+  Future<void> _drawRoute(GeoPoint start, GeoPoint end) async {
+    final startLatLng = LatLng(start.latitude, start.longitude);
+    final endLatLng = LatLng(end.latitude, end.longitude);
+    final route = await OSMService.getRoute(start: startLatLng, end: endLatLng);
+    if (route != null) {
+      setState(() {
+        routePoints = route.map((p) => GeoPoint(latitude: p.latitude, longitude: p.longitude)).toList();
+      });
+      await _mapController.drawRoadManually(routePoints, 'route');
+      await _mapController.zoomToBoundingBox(BoundingBox.fromGeoPoints(routePoints), step: 1.5);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,6 +52,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               latitude: position.latitude,
               longitude: position.longitude,
             );
+            // Example usage: To draw a route from current location to a hard-coded address.
+            // In a real app, this would be triggered by a user action like accepting a request.
+            // final destination = await OSMService.geocodeAddress('380 New York St, Redlands, CA');
+            // if (destination != null) {
+            //   await _drawRoute(GeoPoint(latitude: position.latitude, longitude: position.longitude), GeoPoint(latitude: double.parse(destination['lat']), longitude: double.parse(destination['lon'])));
+            // }
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error centering map: $e')),
@@ -45,11 +69,14 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         onPressed: () async {
           final result = await OSMService.geocodeAddress('380 New York St, Redlands, CA');
           if (result != null) {
-            await _mapController.setCenter(
-              GeoPoint(
-                latitude: double.parse(result['lat']),
-                longitude: double.parse(result['lon']),
-              ),
+            final destination = GeoPoint(
+              latitude: double.parse(result['lat']),
+              longitude: double.parse(result['lon']),
+            );
+            await _mapController.setCenter(destination);
+            await _mapController.addMarker(
+              destination,
+              markerIcon: const MarkerIcon(icon: Icon(Icons.location_pin, color: Colors.blue)),
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -68,4 +95,3 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     super.dispose();
   }
 }
-```
