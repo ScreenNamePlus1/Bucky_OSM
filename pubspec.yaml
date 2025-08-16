@@ -9,20 +9,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  retry: ^3.1.0
-  shared_preferences: ^2.2.0
   firebase_core: ^2.24.0
-  retry: ^3.1.0
-  shared_preferences: ^2.2.0
   firebase_auth: ^4.16.0
   cloud_firestore: ^4.14.0
   provider: ^6.1.1
-  intl: ^0.18.1  # For currency formatting
+  intl: ^0.18.1
   flutter_map: ^6.0.0
   latlong2: ^0.9.0
   geoflutterfire2: ^2.3.15
-  google_maps_flutter: ^2.5.0 
-  flutter_osm_plugin: ^0.57.0  # For OpenStreetMap integration in tracking
+  flutter_osm_plugin: ^0.57.0
+  retry: ^3.1.0
+  shared_preferences: ^2.2.0
 
 dev_dependencies:
   flutter_test:
