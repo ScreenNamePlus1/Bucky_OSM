@@ -40,8 +40,8 @@ class _BidSelectionScreenState extends ConsumerState<BidSelectionScreen> {
               ),
             );
           }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No bids available'));
           }
           final bids = snapshot.data!.docs
               .map((doc) => Bid.fromMap(doc.data()))
@@ -83,4 +83,3 @@ class _BidSelectionScreenState extends ConsumerState<BidSelectionScreen> {
     );
   }
 }
-```
