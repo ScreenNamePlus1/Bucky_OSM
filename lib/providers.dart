@@ -13,8 +13,8 @@ final userProvider = FutureProvider<AppUser?>((ref) async {
   return await authService.getCurrentUser();
 });
 
-class AppStateNotifier extends StateNotifier<Map<String, String?>> {
-  AppStateNotifier(this.ref) : super({'userId': null, 'userRole': 'customer'}) {
+class AppState extends StateNotifier<Map<String, String?>> {
+  AppState(this.ref) : super({'userId': null, 'userRole': 'customer'}) {
     _init();
   }
   final Ref ref;
@@ -36,6 +36,6 @@ class AppStateNotifier extends StateNotifier<Map<String, String?>> {
   }
 }
 
-final appStateProvider = StateNotifierProvider<AppStateNotifier, Map<String, String?>>(
-  (ref) => AppStateNotifier(ref),
+final appStateProvider = StateNotifierProvider<AppState, Map<String, String?>>(
+  (ref) => AppState(ref),
 );
