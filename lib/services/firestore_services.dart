@@ -5,32 +5,22 @@ import '../models/user.dart';
 import '../models/bid.dart';
 import '../models/request.dart';
 
-Future<void> createUser(AppUser user) async {
-      await _firestore.collection('users').doc(user.id).set(user.toMap());
-    }
+class FirestoreService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GeoFlutterFire _geo = GeoFlutterFire();
 
-    Future<AppUser?> getUser(String userId) async {
-      final doc = await _firestore.collection('users').doc(userId).get();
-      if (doc.exists) {
-        return AppUser.fromMap(doc.data()!);
-      }
-      return null;
-    }
-
-  // Existing user methods
-  Future<void> createUser(User user) async {
+  Future<void> createUser(AppUser user) async {
     await _firestore.collection('users').doc(user.id).set(user.toMap());
   }
 
-  Future<User?> getUser(String userId) async {
+  Future<AppUser?> getUser(String userId) async {
     final doc = await _firestore.collection('users').doc(userId).get();
     if (doc.exists) {
-      return User.fromMap(doc.data()!, doc.id);
+      return AppUser.fromMap(doc.data()!);
     }
     return null;
   }
 
-  // Existing GeoFire methods (assumed from repo)
   Future<void> updateUserLocation(String userId, GeoPoint location, String geohash) async {
     await _firestore.collection('users').doc(userId).update({
       'location': location,
@@ -38,7 +28,6 @@ Future<void> createUser(AppUser user) async {
     });
   }
 
-  // Existing request/bid methods (simplified, add your actual implementations)
   Future<void> createRequest(Request request) async {
     await _firestore.collection('requests').doc(request.id).set(request.toMap());
   }
@@ -47,10 +36,9 @@ Future<void> createUser(AppUser user) async {
     return _geo
         .collection(collectionRef: _firestore.collection('requests'))
         .within(center: center, radius: radiusKm, field: 'location')
-        .map((docs) => docs.map((doc) => Request.fromMap(doc.data(), doc.id)).toList());
+        .map((docs) => docs.map((doc) => Request.fromMap(doc.data() ?? {}, doc.id)).toList());
   }
 
-  // Added: Delivery area methods
   Future<void> updateDriverDeliveryArea(String userId, List<LatLng> area) async {
     await _firestore.collection('users').doc(userId).update({
       'deliveryArea': area.map((p) => {'lat': p.latitude, 'lng': p.longitude}).toList(),
@@ -61,5 +49,13 @@ Future<void> createUser(AppUser user) async {
     final doc = await _firestore.collection('users').doc(userId).get();
     final data = doc.data()?['deliveryArea'] as List<dynamic>?;
     return data?.map((p) => LatLng(p['lat'], p['lng'])).toList();
+  }
+
+  Future<void> updateRequestStatus(String requestId, String status) async {
+    await _firestore.collection('requests').doc(requestId).update({'status': status});
+  }
+
+  Future<void> rateUser(String userId, double rating) async {
+    await _firestore.collection('users').doc(userId).update({'rating': rating});
   }
 }
