@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geoflutterfire2/geoflutterfire2.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/user.dart';
+import '../maps_user.dart';
 import '../models/bid.dart';
 import '../models/request.dart';
 
@@ -22,10 +23,8 @@ class FirestoreService {
   }
 
   Future<void> updateUserLocation(String userId, GeoPoint location, String geohash) async {
-    await _firestore.collection('users').doc(userId).update({
-      'location': location,
-      'geohash': geohash,
-    });
+    final osmUser = OSMUser(id: userId, location: location, geohash: geohash);
+    await _firestore.collection('users').doc(userId).update(osmUser.toMap());
   }
 
   Future<void> createRequest(Request request) async {
