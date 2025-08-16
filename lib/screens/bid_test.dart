@@ -33,5 +33,15 @@ void main() {
       ),
       throwsException,
     );
+    expect(
+      () => Bid(
+        id: '1',
+        requestId: 'req1',
+        driverId: 'drv1',
+        counterOffer: 4.99,
+        timestamp: DateTime.now(),
+      ),
+      throwsException,
+    );
   });
 }
