@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/Provider.dart';
-import 'package:intl/intl.dart'; // Add to pubspec.yaml
+import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 
 class BidForm extends StatefulWidget {
@@ -12,7 +11,6 @@ class BidForm extends StatefulWidget {
 class _BidFormState extends State<BidForm> {
   final _formKey = GlobalKey<FormState>();
   double amount = 0.0;
-  final currencyFormat = NumberFormat.currency(symbol: '$');
 
   @override
   Widget build(BuildContext context) {
@@ -38,17 +36,15 @@ class _BidFormState extends State<BidForm> {
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 onChanged: (value) {
                   amount = double.tryParse(value) ?? 0.0;
-                  setState(() {}); // Update UI for formatted display
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Required';
-                  final parsed = double.tryParse(value);
-                  if (parsed == null || parsed <= 0) return 'Enter a valid positive amount';
+                  if (double.tryParse(value) == null || double.parse(value) <= 0) {
+                    return 'Enter a valid amount';
+                  }
                   return null;
                 },
               ),
-              SizedBox(height: 8),
-              Text('Formatted Amount: ${currencyFormat.format(amount)}', style: TextStyle(fontStyle: FontStyle.italic)),
               SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
