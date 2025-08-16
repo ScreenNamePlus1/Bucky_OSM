@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  retry: ^3.1.0
+  shared_preferences: ^2.2.0
   firebase_core: ^2.24.0
   firebase_auth: ^4.16.0
   cloud_firestore: ^4.14.0
