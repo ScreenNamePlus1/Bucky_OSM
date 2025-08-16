@@ -7,6 +7,7 @@ import 'dart:convert';
 import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 import '../providers.dart';
+import '../utils/constants.dart';
 
 class DeliveryAreaEditor extends ConsumerStatefulWidget {
   const DeliveryAreaEditor({super.key});
@@ -81,7 +82,7 @@ class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
       try {
         final response = await http.post(
           Uri.parse(overpassUrl),
-          headers: {'User-Agent': 'Bucky_OSM/1.0 (buckyosm@example.com)'},
+          headers: {'User-Agent': USER_AGENT},
           body: query,
         );
         if (response.statusCode == 200) {
