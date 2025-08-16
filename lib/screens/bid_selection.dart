@@ -10,49 +10,37 @@ class BidSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Select Bid for Request $requestId')),
+      appBar: AppBar(title: Text('Select Driver')),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('bids')
             .where('requestId', isEqualTo: requestId)
-            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error loading bids: ${snapshot.error}'),
-                  ElevatedButton(
-                    onPressed: () => setState(() {}), // Retry
-                    child: Text('Retry'),
-                  ),
-                ],
-              ),
-            );
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
           final bids = snapshot.data!.docs.map((doc) => Bid.fromMap(doc.data() as Map<String, dynamic>)).toList();
           if (bids.isEmpty) {
-            return Center(child: Text('No bids yet'));
+            return Center(child: Text('No bids available'));
           }
           return ListView.builder(
             itemCount: bids.length,
             itemBuilder: (context, index) {
               final bid = bids[index];
               return ListTile(
-                title: Text('Driver: ${bid.driverId}'),
-                subtitle: Text('Amount: \$${bid.counterOffer} - Status: ${bid.status}'),
+                title: Text('Driver: ${bid.driverId} - Amount: \$${bid.counterOffer}'),
+                subtitle: Text('Status: ${bid.status}'),
                 trailing: ElevatedButton(
                   onPressed: () {
-                    // Accept bid logic
+                    // Update status to accepted
                     FirebaseFirestore.instance.collection('bids').doc(bid.id).update({'status': 'accepted'});
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Bid accepted')));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Driver selected')));
                   },
-                  child: Text('Accept'),
+                  child: Text('Select'),
                 ),
               );
             },
