@@ -1,15 +1,31 @@
-class AppUser {
-  final String id;
-  final String role;
-  final String? fcmToken; // For notifications
+class OSMUser {
+    final String id;
+    final String name;
+    final double latitude;
+    final double longitude;
 
-  AppUser({required this.id, required this.role, this.fcmToken});
+    OSMUser({
+      required this.id,
+      required this.name,
+      required this.latitude,
+      required this.longitude,
+    });
 
-  Map<String, dynamic> toMap() => {'id': id, 'role': role, 'fcmToken': fcmToken};
-
-  factory AppUser.fromMap(Map<String, dynamic> map) => AppUser(
-        id: map['id'],
-        role: map['role'],
-        fcmToken: map['fcmToken'],
+    factory OSMUser.fromJson(Map<String, dynamic> json) {
+      return OSMUser(
+        id: json['id'],
+        name: json['name'],
+        latitude: json['latitude'],
+        longitude: json['longitude'],
       );
-}
+    }
+
+    Map<String, dynamic> toJson() {
+      return {
+        'id': id,
+        'name': name,
+        'latitude': latitude,
+        'longitude': longitude,
+      };
+    }
+  }
