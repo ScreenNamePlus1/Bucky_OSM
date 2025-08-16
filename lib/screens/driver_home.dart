@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/location_service.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
-import 'package:bucky_osm/maps/osm_service.dart';
-import 'package:bucky_osm/maps_user.dart';
+import '../maps/osm_service.dart';
+import '../maps_user.dart';
 
 class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({Key? key}) : super(key: key);
