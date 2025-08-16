@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers.dart';
 import '../services/firestore_service.dart';
+import '../services/location_service.dart';
+import '../providers.dart';
 
 class DeliveryAreaEditor extends ConsumerStatefulWidget {
   const DeliveryAreaEditor({super.key});
@@ -16,7 +17,7 @@ class DeliveryAreaEditor extends ConsumerStatefulWidget {
 
 class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
   final MapController _mapController = MapController();
-  LatLng _initialCenter = const LatLng(37.7749, -122.4194); // Fallback
+  LatLng _initialCenter = const LatLng(37.7749, -122.4194);
   List<LatLng> _polygonPoints = [];
   List<Polygon> _polygons = [];
   bool _drawingMode = false;
@@ -42,7 +43,7 @@ class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
   Future<void> _loadInitialArea() async {
     final appState = ref.read(appStateProvider);
     final firestore = ref.read(firestoreServiceProvider);
-    final area = await firestore.getDriverDeliveryArea(appState.state['userId'] ?? '');
+    final area = await firestore.getDriverDeliveryArea(appState['userId'] ?? '');
     if (area != null) {
       setState(() {
         _polygonPoints = area;
@@ -80,7 +81,7 @@ class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
       try {
         final response = await http.post(
           Uri.parse(overpassUrl),
-          headers: {'User-Agent': 'Bucky_OSM/1.0 (your-email@example.com)'},
+          headers: {'User-Agent': 'Bucky_OSM/1.0 (buckyosm@example.com)'},
           body: query,
         );
         if (response.statusCode == 200) {
@@ -121,11 +122,13 @@ class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
   bool _linesIntersect(LatLng p1, LatLng p2, LatLng p3, LatLng p4) {
     double det = (p2.longitude - p1.longitude) * (p4.latitude - p3.latitude) -
         (p4.longitude - p3.longitude) * (p2.latitude - p1.latitude);
-    if (det == 0) return false; // Parallel lines
+    if (det == 0) return false;
     double t = ((p3.longitude - p1.longitude) * (p4.latitude - p3.latitude) -
-            (p3.latitude - p1.latitude) * (p4.longitude - p3.longitude)) / det;
+            (p3.latitude - p1.latitude) * (p4.longitude - p3.longitude)) /
+        det;
     double u = -((p2.longitude - p1.longitude) * (p3.latitude - p1.latitude) -
-            (p2.latitude - p1.latitude) * (p3.longitude - p1.longitude)) / det;
+            (p2.latitude - p1.latitude) * (p3.longitude - p1.longitude)) /
+        det;
     return t >= 0 && t <= 1 && u >= 0 && u <= 1;
   }
 
@@ -136,7 +139,6 @@ class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
       );
       return;
     }
-    // Check for self-intersection
     bool hasIntersection = false;
     for (int i = 0; i < _polygonPoints.length - 1; i++) {
       for (int j = i + 2; j < _polygonPoints.length - 1; j++) {
@@ -155,7 +157,7 @@ class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
     List<LatLng> snappedPoints = await _snapToRoads(_polygonPoints);
 
     if (snappedPoints.isNotEmpty && snappedPoints.first != snappedPoints.last) {
-      snappedPoints.add(snappedPoints.first); // Close polygon
+      snappedPoints.add(snappedPoints.first);
     }
 
     setState(() {
@@ -166,7 +168,7 @@ class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
 
     final appState = ref.read(appStateProvider);
     final firestore = ref.read(firestoreServiceProvider);
-    await firestore.updateDriverDeliveryArea(appState.state['userId'] ?? '', _polygonPoints);
+    await firestore.updateDriverDeliveryArea(appState['userId'] ?? '', _polygonPoints);
   }
 
   void _updatePolygon() {
@@ -183,40 +185,43 @@ class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: _toggleDrawingMode,
-              child: Text(_drawingMode ? 'Cancel Drawing' : 'Define Delivery Area'),
-            ),
-            if (_drawingMode && _polygonPoints.length > 2)
-              ElevatedButton(
-                onPressed: _finalizeArea,
-                child: const Text('Save Area'),
-              ),
-          ],
-        ),
-        Expanded(
-          child: FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _initialCenter,
-              initialZoom: 12.0,
-              onTap: _onMapTap,
-            ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Define Delivery Area')),
+      body: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TileLayer(
-                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                subdomains: const ['a', 'b', 'c'],
+              ElevatedButton(
+                onPressed: _toggleDrawingMode,
+                child: Text(_drawingMode ? 'Cancel Drawing' : 'Define Delivery Area'),
               ),
-              PolygonLayer(polygons: _polygons),
+              if (_drawingMode && _polygonPoints.length > 2)
+                ElevatedButton(
+                  onPressed: _finalizeArea,
+                  child: const Text('Save Area'),
+                ),
             ],
           ),
-        ),
-      ],
+          Expanded(
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _initialCenter,
+                initialZoom: 12.0,
+                onTap: _onMapTap,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  subdomains: const ['a', 'b', 'c'],
+                ),
+                PolygonLayer(polygons: _polygons),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
