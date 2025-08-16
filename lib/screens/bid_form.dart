@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/Provider.dart';
+import 'package:intl/intl.dart'; // Add to pubspec.yaml
 import '../providers/app_state.dart';
 
 class BidForm extends StatefulWidget {
@@ -11,7 +12,7 @@ class BidForm extends StatefulWidget {
 class _BidFormState extends State<BidForm> {
   final _formKey = GlobalKey<FormState>();
   double amount = 0.0;
-  bool _isLoading = false;
+  final currencyFormat = NumberFormat.currency(symbol: '$');
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +38,7 @@ class _BidFormState extends State<BidForm> {
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 onChanged: (value) {
                   amount = double.tryParse(value) ?? 0.0;
+                  setState(() {}); // Update UI for formatted display
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Required';
@@ -45,38 +47,35 @@ class _BidFormState extends State<BidForm> {
                   return null;
                 },
               ),
+              SizedBox(height: 8),
+              Text('Formatted Amount: ${currencyFormat.format(amount)}', style: TextStyle(fontStyle: FontStyle.italic)),
               SizedBox(height: 24),
-              _isLoading
-                  ? CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          setState(() => _isLoading = true);
-                          try {
-                            await FirebaseFirestore.instance.collection('bids').add({
-                              'requestId': requestId,
-                              'driverId': appState.userId,
-                              'amount': amount,
-                              'createdAt': Timestamp.now(),
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Bid placed successfully')),
-                            );
-                            Navigator.pop(context);
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
-                            );
-                          } finally {
-                            setState(() => _isLoading = false);
-                          }
-                        }
-                      },
-                      child: Text('Submit Bid'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 50),
-                      ),
-                    ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    try {
+                      await FirebaseFirestore.instance.collection('bids').add({
+                        'requestId': requestId,
+                        'driverId': appState.userId,
+                        'amount': amount,
+                        'createdAt': Timestamp.now(),
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Bid placed successfully')),
+                      );
+                      Navigator.pop(context);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e')),
+                      );
+                    }
+                  }
+                },
+                child: Text('Submit Bid'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 50),
+                ),
+              ),
             ],
           ),
         ),
