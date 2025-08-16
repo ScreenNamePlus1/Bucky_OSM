@@ -6,17 +6,13 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<AppUser?> signInWithPhone(String phone, String verificationCode, String verificationId) async {
+  Future<AppUser?> signInWithPhone(String phone, String role, String smsCode, String verificationId) async {
     try {
-      final credential = PhoneAuthProvider.credential(
-        verificationId: verificationId, // Passed from UI verification callback
-        smsCode: verificationCode,
-      );
+      final credential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: smsCode);
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user;
-
       if (user != null) {
-        final appUser = AppUser(id: user.uid, role: role); // Role must be passed or queried
+        final appUser = AppUser(id: user.uid, role: role);
         await _firestore.collection('users').doc(user.uid).set(appUser.toMap());
         return appUser;
       }
