@@ -9,7 +9,7 @@ class AppState with ChangeNotifier {
   String? get userId => _userId;
   String? get userRole => _userRole;
 
-  void setUser(String? id, String? role) {
+  void setUser(if (!['customer', 'driver'].contains(role)) throw Exception('Invalid role');) {
     _userId = id;
     _userRole = role ?? 'customer';
     notifyListeners();
