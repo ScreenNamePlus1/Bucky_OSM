@@ -64,6 +64,11 @@ class _CustomerHomeState extends ConsumerState<CustomerHome> {
                 final docs = _selectedStatus == 'all'
                     ? snapshot.data!.docs
                     : snapshot.data!.docs.where((doc) => doc['status'] == _selectedStatus).toList();
+                
+                if (docs.isEmpty) {
+                  return const Center(child: Text('No requests match the selected status.'));
+                }
+                
                 return ListView(
                   padding: const EdgeInsets.all(16.0),
                   children: docs.map((doc) {
