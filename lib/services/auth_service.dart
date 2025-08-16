@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../auth_user.dart';
 import '../models/user.dart';
 import 'dart:async';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final firebase.FirebaseAuth _auth = firebase.FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> verifyPhoneNumber(
@@ -23,15 +24,19 @@ class AuthService {
       }
       await _auth.verifyPhoneNumber(
         phoneNumber: phone,
-        verificationCompleted: (PhoneAuthCredential credential) async {
+        verificationCompleted: (firebase.PhoneAuthCredential credential) async {
           final userCredential = await _auth.signInWithCredential(credential);
           final user = userCredential.user;
           if (user != null) {
+            final authUser = AuthUser.fromFirebaseUser(user, role);
             final appUser = AppUser(id: user.uid, role: role);
-            await _firestore.collection('users').doc(user.uid).set(appUser.toMap());
+            await _firestore.collection('users').doc(user.uid).set({
+              ...authUser.toMap(),
+              ...appUser.toMap(),
+            });
           }
         },
-        verificationFailed: (FirebaseAuthException e) {
+        verificationFailed: (firebase.FirebaseAuthException e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Verification failed: ${e.message}')),
           );
@@ -55,15 +60,19 @@ class AuthService {
     String role,
   ) async {
     try {
-      final credential = PhoneAuthProvider.credential(
+      final credential = firebase.PhoneAuthProvider.credential(
         verificationId: verificationId,
         smsCode: smsCode,
       );
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user;
       if (user != null) {
+        final authUser = AuthUser.fromFirebaseUser(user, role);
         final appUser = AppUser(id: user.uid, role: role);
-        await _firestore.collection('users').doc(user.uid).set(appUser.toMap());
+        await _firestore.collection('users').doc(user.uid).set({
+          ...authUser.toMap(),
+          ...appUser.toMap(),
+        });
         return appUser;
       }
     } catch (e) {
