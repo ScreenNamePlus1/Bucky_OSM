@@ -1,12 +1,23 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 class AppState with ChangeNotifier {
-  String userRole = 'customer'; // Default role
-  String userId = '';
+  String? _userId;
+  String? _userRole;
 
-  void setUser(String id, String role) {
-    userId = id;
-    userRole = role;
+  AppState() : _userId = null, _userRole = 'customer';
+
+  String? get userId => _userId;
+  String? get userRole => _userRole;
+
+  void setUser(String? id, String? role) {
+    _userId = id;
+    _userRole = role ?? 'customer';
+    notifyListeners();
+  }
+
+  void clearUser() {
+    _userId = null;
+    _userRole = null;
     notifyListeners();
   }
 }
