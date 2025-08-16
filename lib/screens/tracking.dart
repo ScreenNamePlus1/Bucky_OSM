@@ -8,12 +8,8 @@ import '../services/auth_service.dart';
 import '../models/request.dart';
 import '../providers.dart';
 
-final firestoreServiceProvider = Provider<FirestoreService>((ref) => FirestoreService());
-
 class TrackingScreen extends ConsumerStatefulWidget {
-  final DeliveryRequest request;
-
-  const TrackingScreen({required this.request, super.key});
+  const TrackingScreen({super.key});
 
   @override
   _TrackingScreenState createState() => _TrackingScreenState();
@@ -29,13 +25,15 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   @override
   void initState() {
     super.initState();
+    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final request = args['request'] as Request;
     ref.read(locationServiceProvider).getLocationStream().listen((position) async {
       setState(() {
         _driverLocation = GeoPoint(latitude: position.latitude, longitude: position.longitude);
       });
-      if (widget.request.driverId != null) {
+      if (request.driverId != null) {
         await ref.read(firestoreServiceProvider).updateUserLocation(
-              widget.request.driverId!,
+              request.driverId!,
               GeoPoint(position.latitude, position.longitude),
               GeoFlutterFire().point(latitude: position.latitude, longitude: position.longitude).hash,
             );
@@ -45,6 +43,8 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final request = args['request'] as Request;
     return Scaffold(
       appBar: AppBar(title: const Text('Track Delivery')),
       body: Column(
@@ -66,8 +66,8 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                     },
                   ),
           ),
-          StreamBuilder<DocumentSnapshot>(
-            stream: ref.read(firestoreServiceProvider)._firestore.collection('requests').doc(widget.request.id).snapshots(),
+          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: ref.read(firestoreServiceProvider)._firestore.collection('requests').doc(request.id).snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) return const SizedBox.shrink();
               final status = snapshot.data!['status'] ?? 'pending';
@@ -79,25 +79,25 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                   return Column(
                     children: [
                       Text('Status: $status'),
-                      if (user?.id == widget.request.driverId)
+                      if (user?.id == request.driverId)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ElevatedButton(
-                              onPressed: () => ref.read(firestoreServiceProvider).updateRequestStatus(widget.request.id, 'en_route'),
+                              onPressed: () => ref.read(firestoreServiceProvider).updateRequestStatus(request.id, 'en_route'),
                               child: const Text('Start Delivery'),
                             ),
                             ElevatedButton(
-                              onPressed: () => ref.read(firestoreServiceProvider).updateRequestStatus(widget.request.id, 'delivered'),
+                              onPressed: () => ref.read(firestoreServiceProvider).updateRequestStatus(request.id, 'delivered'),
                               child: const Text('Complete'),
                             ),
                           ],
                         ),
-                      if (user?.id == widget.request.customerId && status == 'delivered')
+                      if (user?.id == request.customerId && status == 'delivered')
                         ElevatedButton(
                           onPressed: () async {
-                            if (widget.request.driverId != null) {
-                              await ref.read(firestoreServiceProvider).rateUser(widget.request.driverId!, 5.0);
+                            if (request.driverId != null) {
+                              await ref.read(firestoreServiceProvider).rateUser(request.driverId!, 5.0);
                               Navigator.pop(context);
                             }
                           },
