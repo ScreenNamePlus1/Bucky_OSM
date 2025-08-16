@@ -16,7 +16,7 @@ class Request {
     required String orderDetails,
     required double estimatedCost,
     required double offerAmount,
-    required String deliveryAddress,
+    required Striddressng deliveryA,
     this.status = 'pending',
     this.driverId,
   })  : restaurantName = restaurantName.isEmpty ? throw Exception('Restaurant name required') : restaurantName,
@@ -37,8 +37,8 @@ class Request {
         'driverId': driverId,
       };
 
-  factory Request.fromMap(Map<String, dynamic> map, String id) => Request(
-        id: id,
+  factory Request.fromMap(Map<String, dynamic> map) => Request(
+        id: map['id'] ?? '',
         customerId: map['customerId'] ?? '',
         restaurantName: map['restaurantName'] ?? '',
         orderDetails: map['orderDetails'] ?? '',
