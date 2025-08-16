@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'screens/login.dart';
 import 'screens/customer_home.dart';
 import 'screens/driver_home.dart';
@@ -9,22 +8,16 @@ import 'screens/request_form.dart';
 import 'screens/bid_form.dart';
 import 'screens/bid_selection.dart';
 import 'screens/tracking.dart';
-import 'providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  Intl.defaultLocale = 'en_US';
-
-  FlutterError.onError = (details) {
-    print('Global error: $details');
-    // Log to Firebase or Sentry
-  };
-
-  runApp(ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
@@ -35,17 +28,13 @@ class MyApp extends ConsumerWidget {
       ),
       initialRoute: '/login',
       routes: {
-        '/login': (_) => LoginScreen(),
-        '/customer': (_) => CustomerHome(),
-        '/driver': (_) => DriverHomeScreen(),
-        '/request': (_) => RequestForm(),
-        '/bid': (_) => BidForm(),
-        '/bids': (_) => BidSelectionScreen(
-              requestId: ModalRoute.of(_)!.settings.arguments as String,
-            ),
-        '/tracking': (_) => TrackingScreen(
-              request: ModalRoute.of(_)!.settings.arguments as DeliveryRequest,
-            ),
+        '/login': (_) => const LoginScreen(),
+        '/customer': (_) => const CustomerHome(),
+        '/driver': (_) => const DriverHomeScreen(),
+        '/request': (_) => const RequestForm(),
+        '/bid': (_) => const BidForm(),
+        '/bids': (_) => const BidSelectionScreen(),
+        '/tracking': (_) => const TrackingScreen(),
       },
     );
   }
