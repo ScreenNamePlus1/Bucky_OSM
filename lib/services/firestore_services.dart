@@ -5,9 +5,17 @@ import '../models/user.dart';
 import '../models/bid.dart';
 import '../models/request.dart';
 
-class FirestoreService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GeoFlutterFire _geo = GeoFlutterFire();
+Future<void> createUser(AppUser user) async {
+      await _firestore.collection('users').doc(user.id).set(user.toMap());
+    }
+
+    Future<AppUser?> getUser(String userId) async {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        return AppUser.fromMap(doc.data()!);
+      }
+      return null;
+    }
 
   // Existing user methods
   Future<void> createUser(User user) async {
