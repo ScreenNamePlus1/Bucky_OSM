@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
-import 'providers/app_state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/login.dart';
 import 'screens/customer_home.dart';
 import 'screens/driver_home.dart';
@@ -13,17 +12,12 @@ import 'screens/tracking.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => AppState(),
-      child: MyApp(),
-    ),
-  );
+  runApp(ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'Local Delivery App',
       theme: ThemeData(
