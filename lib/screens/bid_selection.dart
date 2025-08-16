@@ -23,7 +23,10 @@ class BidSelectionScreen extends StatelessWidget {
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
-          final bids = snapshot.data!.docs.map((doc) => Bid.fromMap(doc.data() as Map<String, dynamic>)).toList();
+          final bids = snapshot.data!.docs
+      .map((doc) => Bid.fromMap(doc.data() as Map<String, dynamic>))
+      .toList()
+    ..sort((a, b) => a.counterOffer.compareTo(b.counterOffer));
           if (bids.isEmpty) {
             return Center(child: Text('No bids available'));
           }
