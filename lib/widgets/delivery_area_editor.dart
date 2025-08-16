@@ -4,18 +4,17 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/app_state.dart';
+import '../providers.dart';
 import '../services/firestore_service.dart';
-import '../services/location_service.dart';
 
-class DeliveryAreaEditor extends StatefulWidget {
+class DeliveryAreaEditor extends ConsumerStatefulWidget {
   const DeliveryAreaEditor({super.key});
 
   @override
   _DeliveryAreaEditorState createState() => _DeliveryAreaEditorState();
 }
 
-class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
+class _DeliveryAreaEditorState extends ConsumerState<DeliveryAreaEditor> {
   final MapController _mapController = MapController();
   LatLng _initialCenter = const LatLng(37.7749, -122.4194); // Fallback
   List<LatLng> _polygonPoints = [];
@@ -31,7 +30,7 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
 
   Future<void> _setInitialCenter() async {
     try {
-      final position = await LocationService().getCurrentLocation();
+      final position = await ref.read(locationServiceProvider).getCurrentLocation();
       setState(() {
         _initialCenter = LatLng(position.latitude, position.longitude);
       });
@@ -41,8 +40,8 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
   }
 
   Future<void> _loadInitialArea() async {
-    final appState = context.read(appStateProvider);
-    final firestore = FirestoreService();
+    final appState = ref.read(appStateProvider);
+    final firestore = ref.read(firestoreServiceProvider);
     final area = await firestore.getDriverDeliveryArea(appState.state['userId'] ?? '');
     if (area != null) {
       setState(() {
@@ -81,7 +80,7 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
       try {
         final response = await http.post(
           Uri.parse(overpassUrl),
-          headers: {'User-Agent': 'Bucky_OSM/1.0'},
+          headers: {'User-Agent': 'Bucky_OSM/1.0 (your-email@example.com)'},
           body: query,
         );
         if (response.statusCode == 200) {
@@ -133,7 +132,7 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
   Future<void> _finalizeArea() async {
     if (_polygonPoints.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('At least 3 points required')),
+        const SnackBar(content: Text('At least 3 points required')),
       );
       return;
     }
@@ -149,7 +148,7 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
     }
     if (hasIntersection) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Polygon cannot self-intersect')),
+        const SnackBar(content: Text('Polygon cannot self-intersect')),
       );
       return;
     }
@@ -165,8 +164,8 @@ class _DeliveryAreaEditorState extends State<DeliveryAreaEditor> {
       _drawingMode = false;
     });
 
-    final appState = context.read(appStateProvider);
-    final firestore = FirestoreService();
+    final appState = ref.read(appStateProvider);
+    final firestore = ref.read(firestoreServiceProvider);
     await firestore.updateDriverDeliveryArea(appState.state['userId'] ?? '', _polygonPoints);
   }
 
