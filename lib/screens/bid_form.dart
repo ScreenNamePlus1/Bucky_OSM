@@ -40,6 +40,9 @@ class _BidFormState extends State<BidForm> {
           key: _formKey,
           child: Column(
             children: [
+
+
+
               TextFormField(
                 decoration: InputDecoration(
                   labelText: Intl.message('Bid Amount ($)', name: 'bidAmountLabel'),
@@ -48,6 +51,10 @@ class _BidFormState extends State<BidForm> {
                 ),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 focusNode: _amountFocus,
+                onChanged: (value) {
+                final parsed = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+    amount = parsed > 0 ? parsed : 0.0;
+  },
                 onChanged: (value) {
                   amount = double.tryParse(value) ?? 0.0;
                 },
@@ -73,5 +80,15 @@ class _BidFormState extends State<BidForm> {
                               'createdAt': Timestamp.now(),
                             });
                             setState(() => _lastSubmission = DateTime.now());
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(Int
+ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Bid submitted successfully')),
+            );
+Navigator.pop(context);
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: $e')),
+            );
+          }
+        }
+      }
+    : null,
