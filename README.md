@@ -60,7 +60,7 @@ This guide will walk you through the process of cloning a Flutter project from G
 
 Before you begin, ensure that you have the Flutter SDK installed and configured on your machine. You can verify your setup by running:
 
-```bash
+bash
 flutter doctor
 
 This command will check for all necessary dependencies and tools required for development.
